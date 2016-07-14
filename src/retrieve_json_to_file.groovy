@@ -6,19 +6,20 @@ import groovy.json.JsonBuilder
  */
 
 String base = "http://lxqgk01.nanigans.com/gk/sites/76218/generic_attributes/"
-String fileBase = "/Users/mfoley/ng_refactor/before/generic_attributes"
+String fileBase = "/Users/mfoley/ng_refactor/"
+String folder = "/" + args[0] + "/"
 File f
 String apiString
 URL apiUrl
 
-attributeID = new String()
+def attributeID = new String()
 
 // build the url
 apiString = base
 apiUrl = new URL(apiString)
 
 // create the file that will be output to
-f = new File(fileBase + '.json')
+f = new File(fileBase + folder + 'generic_attributes.json')
 f.createNewFile()
 writer = new PrintWriter(f)
 
@@ -39,7 +40,7 @@ content.each{ jsonAttribute ->
     apiUrl = new URL(apiString)
 
     // create the file that will be output to
-    f = new File(fileBase + '_' + attributeID + '.json')
+    f = new File(fileBase + folder + attributeID + '.json')
     f.createNewFile()
     writer = new PrintWriter(f)
 

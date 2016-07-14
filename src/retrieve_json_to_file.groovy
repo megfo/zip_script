@@ -24,3 +24,10 @@ def content = new JsonSlurper().parse(apiUrl)
 
 // write  json to file
 f.write(new JsonBuilder(content).toPrettyString())
+
+// loop through the entire original json file
+originalJson.each{ originalJsonAttribute ->
+
+    // keep track of all the attributes we have checked already
+    attributeID = originalJsonAttribute['id']
+    attributeIDList << attributeID

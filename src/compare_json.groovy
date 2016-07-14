@@ -7,15 +7,15 @@ import java.util.logging.Logger
 def document1 = new File("/Users/mfoley/site_4_generic_attributes.json")
 def document2 = new File("/Users/mfoley/site_4_generic_attributes2.json")
 
-def originalJson = new JsonSlurper().parse(document1)
-def newJson = new JsonSlurper().parse(document2)
+def beforeJson = new JsonSlurper().parse(document1)
+def afterJson = new JsonSlurper().parse(document2)
 
 def match
 def attributeID = new String()
 def attributeIDList = []
 
 def i = new Integer(0)
-def newJsonAttributeID = new String()
+def afterJsonAttributeID = new String()
 
 def subAttributeKey = new String()
 def subAttributeKeyList = []
@@ -28,22 +28,22 @@ attributeExists = false
 
 // verify the size
 try {
-    assert originalJson.size() == newJson.size()
+    assert beforeJson.size() == afterJson.size()
 }
 catch (AssertionError assertionError) {
     logger.warning "The two jsons do not have the same number of values."
 }
 
 // loop through the entire original json file
-originalJson.each{ originalJsonAttribute ->
+beforeJson.each{ beforeJsonAttribute ->
 
     // keep track of all the attributes we have checked already
-    attributeID = originalJsonAttribute['id']
+    attributeID = beforeJsonAttribute['id']
     attributeIDList << attributeID
 
     // determine if there is an attribute in the new json file that exactly matches
     // the attribute in the original json file
-    match = newJson.any{ newJsonAttribute -> originalJsonAttribute.equals(newJsonAttribute) }
+    match = afterJson.any{ afterJsonAttribute -> beforeJsonAttribute.equals(afterJsonAttribute) }
 
     if(match == true) {
         logger.info "Attribute ${attributeID} matches in both files."
@@ -51,54 +51,54 @@ originalJson.each{ originalJsonAttribute ->
     else {
 
         // determine if the attribute exists at all in the new json file
-        for(i=0; i<newJson.size(); i++) {
-            newJsonAttributeID = newJson[i].get('id')
+        for(i=0; i<afterJson.size(); i++) {
+            afterJsonAttributeID = afterJson[i].get('id')
 
             // attribute exists
-            if(newJsonAttributeID == attributeID) {
+            if(afterJsonAttributeID == attributeID) {
                 attributeExists = true
                 logger.warning "Attribute ${attributeID} exists in both files, but does not match."
 
-                // loop through each sub-attribute of the originalJsonAttribute
-                originalJsonAttribute.each { originalJsonSubAttribute ->
+                // loop through each sub-attribute of the beforeJsonAttribute
+                beforeJsonAttribute.each { beforeJsonSubAttribute ->
 
                     // keep track of all the sub-attributes we have checked already
-                    subAttributeKey = originalJsonSubAttribute.key
+                    subAttributeKey = beforeJsonSubAttribute.key
                     subAttributeKeyList << subAttributeKey
 
-                    // determine if there is a sub-attribute in the newJsonAttribute that exactly matches
+                    // determine if there is a sub-attribute in the afterJsonAttribute that exactly matches
                     // the sub-attribute from the original json attribute
-                    match = newJson[i].any{ newJsonSubAttribute ->
-                        originalJsonSubAttribute.equals(newJsonSubAttribute) }
+                    match = afterJson[i].any{ afterJsonSubAttribute ->
+                        beforeJsonSubAttribute.equals(afterJsonSubAttribute) }
 
                     if(match == true) {
                         logger.info "--> ${attributeID}.${subAttributeKey} matches in both files."
                     }
                     else {
 
-                        // determine if the sub-attribute exists at all in the newJsonAttribute
-                        if (newJson[i].containsKey(originalJsonSubAttribute.key)) {
+                        // determine if the sub-attribute exists at all in the afterJsonAttribute
+                        if (afterJson[i].containsKey(beforeJsonSubAttribute.key)) {
                             logger.warning "--> ${attributeID}.${subAttributeKey} exists in both files, " +
                                     "but does not match."
                         }
                         else {
-                            logger.warning "--> ${attributeID}.${subAttributeKey} exists in originalJson, " +
-                                    "but does not exist in newJson."
+                            logger.warning "--> ${attributeID}.${subAttributeKey} exists in beforeJson, " +
+                                    "but does not exist in afterJson."
                         }
                     }
                 }
 
-                // loop through each sub-attribute of the newJsonAttribute
-                newJson[i].each {
+                // loop through each sub-attribute of the afterJsonAttribute
+                afterJson[i].each {
 
                     // check if we've already checked this sub-attribute
                     subAttributeKey = it.key
                     match = subAttributeKeyList.contains(subAttributeKey)
 
-                    // if we didn't already check it, it must be missing from the originalJson
+                    // if we didn't already check it, it must be missing from the beforeJson
                     if(match == false)
-                        logger.warning "--> ${attributeID}.${subAttributeKey} exists in newJson, but does exist in" +
-                                " originalJson."
+                        logger.warning "--> ${attributeID}.${subAttributeKey} exists in afterJson, but does exist in" +
+                                " beforeJson."
                 }
 
                 subAttributeKeyList.clear()
@@ -108,20 +108,20 @@ originalJson.each{ originalJsonAttribute ->
 
         // attribute does not exist at all in the new json file
         if(attributeExists == false)
-            logger.warning "Attribute ${attributeID} exists in originalJson, but does not exist in newJson."
+            logger.warning "Attribute ${attributeID} exists in beforeJson, but does not exist in afterJson."
 
         attributeExists = false
     }
 }
 
-// loop through the newJson
-newJson.each { newJsonEntry ->
+// loop through the afterJson
+afterJson.each { afterJsonEntry ->
 
     // check if we've already checked this attribute
-    attributeID = newJsonEntry['id']
+    attributeID = afterJsonEntry['id']
     match = attributeIDList.contains(attributeID)
 
-    // if we didn't already check it, it must be missing from the originalJson
+    // if we didn't already check it, it must be missing from the beforeJson
     if(match == false)
-        logger.warning "Attribute ${attributeID} exists in newJson, but does not exist in originalJson."
+        logger.warning "Attribute ${attributeID} exists in afterJson, but does not exist in beforeJson."
 }

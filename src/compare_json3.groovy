@@ -7,24 +7,24 @@ import java.util.logging.Logger
 
 // variables for file location
 String homeDir = System.getProperty("user.home")
-String fileBase = homeDir + "/"
-def beforeDoc = new File(fileBase + "site_4_generic_attributes.json")
-def afterDoc = new File(fileBase + "site_4_generic_attributes2.json")
+def beforeDoc = new File(homeDir + "/ng_refactor/before/generic_attributes.json")
+def afterDoc = new File(homeDir + "/ng_refactor/after/generic_attributes.json")
 
-// retrieve generic attributes json from file
+// read in json from file
 def beforeJson = new JsonSlurper().parse(beforeDoc)
 def afterJson = new JsonSlurper().parse(afterDoc)
 
-// attributes for processing
+
 Boolean match = false
 String attributeID
 def attributeIDList = []
+
 Integer i = 0
 String afterJsonAttributeID
+
 String subAttributeKey
 def subAttributeKeyList = []
 Boolean attributeExists = false
-
 
 Logger logger = Logger.getLogger("")
 

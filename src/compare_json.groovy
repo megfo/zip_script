@@ -5,11 +5,13 @@ import java.util.logging.Logger
  * Created by mfoley on 7/8/16.
  */
 
-// variables for file location
+// build the file path
 String homeDir = System.getProperty("user.home")
 String fileBase = homeDir + "/"
-def beforeDoc = new File(fileBase + "site_4_generic_attributes.json")
-def afterDoc = new File(fileBase + "site_4_generic_attributes2.json")
+String beforeFileName = fileBase + "site_4_generic_attributes.json"
+String afterFileName = fileBase + "site_4_generic_attributes2.json"
+def beforeDoc = new File(beforeFileName)
+def afterDoc = new File(afterFileName)
 
 // retrieve generic attributes json from file
 def beforeJson = new JsonSlurper().parse(beforeDoc)
@@ -24,12 +26,17 @@ String afterJsonAttributeID
 String subAttributeKey
 def subAttributeKeyList = []
 Boolean attributeExists = false
+String entryKey
+def entryKeyList = []
 
 // create the file for log output
 def logOutput = new File(fileBase + "site4_log_output.txt")
 logOutput.createNewFile()
 def logWriter = new PrintWriter(logOutput)
-// Logger logger = Logger.getLogger("")
+
+// write header for file
+logWriter.println("comparing generic_attributes files\n")
+logWriter.flush()
 
 // verify the size
 try {
@@ -38,28 +45,26 @@ try {
 catch (AssertionError assertionError) {
     logWriter.println("WARNING: The two jsons do not have the same number of values.")
     logWriter.flush()
-    // logger.warning "The two jsons do not have the same number of values."
 }
 
-// loop through the entire original json file
+// loop through the entire before json file
 beforeJson.each{ beforeJsonAttribute ->
 
     // keep track of all the attributes we have checked already
     attributeID = beforeJsonAttribute['id']
     attributeIDList << attributeID
 
-    // determine if there is an attribute in the new json file that exactly matches
-    // the attribute in the original json file
+    // determine if there is an attribute in the after json file that exactly matches
+    // the attribute in the before json file
     match = afterJson.any{ afterJsonAttribute -> beforeJsonAttribute.equals(afterJsonAttribute) }
 
     if(match == true) {
         logWriter.println("INFO: Attribute ${attributeID} matches in both files.")
         logWriter.flush()
-        // logger.info "Attribute ${attributeID} matches in both files."
     }
     else {
 
-        // determine if the attribute exists at all in the new json file
+        // determine if the attribute exists at all in the after json file
         for(i=0; i<afterJson.size(); i++) {
             afterJsonAttributeID = afterJson[i].get('id')
 
@@ -68,7 +73,6 @@ beforeJson.each{ beforeJsonAttribute ->
                 attributeExists = true
                 logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but does not match.")
                 logWriter.flush()
-                // logger.warning "Attribute ${attributeID} exists in both files, but does not match."
 
                 // loop through each sub-attribute of the beforeJsonAttribute
                 beforeJsonAttribute.each { beforeJsonSubAttribute ->
@@ -78,14 +82,13 @@ beforeJson.each{ beforeJsonAttribute ->
                     subAttributeKeyList << subAttributeKey
 
                     // determine if there is a sub-attribute in the afterJsonAttribute that exactly matches
-                    // the sub-attribute from the original json attribute
+                    // the sub-attribute from the before json attribute
                     match = afterJson[i].any{ afterJsonSubAttribute ->
                         beforeJsonSubAttribute.equals(afterJsonSubAttribute) }
 
                     if(match == true) {
                         logWriter.println("--> INFO: ${attributeID}.${subAttributeKey} matches in both files.")
                         logWriter.flush()
-                        // logger.info "--> ${attributeID}.${subAttributeKey} matches in both files."
                     }
                     else {
 
@@ -94,15 +97,11 @@ beforeJson.each{ beforeJsonAttribute ->
                             logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in both files, " +
                                     "but does not match.")
                             logWriter.flush()
-                            // logger.warning "--> ${attributeID}.${subAttributeKey} exists in both files, " +
-                            //        "but does not match."
                         }
                         else {
-                            logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in beforeJson, " +
-                                    "but does not exist in afterJson.")
+                            logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
+                                    "${beforeFileName}, but does not exist in ${afterFileName}.")
                             logWriter.flush()
-                            // logger.warning "--> ${attributeID}.${subAttributeKey} exists in beforeJson, " +
-                            //        "but does not exist in afterJson."
                         }
                     }
                 }
@@ -116,11 +115,9 @@ beforeJson.each{ beforeJsonAttribute ->
 
                     // if we didn't already check it, it must be missing from the beforeJson
                     if(match == false) {
-                        logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in afterJson, but " +
-                                "does not exist in beforeJson.")
+                        logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in ${afterFileName}, " +
+                                "but does not exist in ${beforeFileName}.")
                         logWriter.flush()
-                        // logger.warning "--> ${attributeID}.${subAttributeKey} exists in afterJson, but does not " +
-                        //        "exist in beforeJson."
                     }
                 }
 
@@ -131,10 +128,9 @@ beforeJson.each{ beforeJsonAttribute ->
 
         // attribute does not exist at all in the new json file
         if(attributeExists == false) {
-            logWriter.println("WARNING: Attribute ${attributeID} exists in beforeJson, but does not exist in " +
-                    "afterJson.")
+            logWriter.println("WARNING: Attribute ${attributeID} exists in ${beforeFileName}, but does not exist in " +
+                    "${afterFileName}.")
             logWriter.flush()
-            // logger.warning "Attribute ${attributeID} exists in beforeJson, but does not exist in afterJson."
         }
 
         attributeExists = false
@@ -150,9 +146,92 @@ afterJson.each { afterJsonEntry ->
 
     // if we didn't already check it, it must be missing from the beforeJson
     if(match == false) {
-        logWriter.println("WARNING: Attribute ${attributeID} exists in afterJson, but does not exist in beforeJson.")
+        logWriter.println("WARNING: Attribute ${attributeID} exists in ${afterFileName}, but does not exist " +
+                "in ${beforeFileName}.")
         logWriter.flush()
-        // logger.warning "Attribute ${attributeID} exists in afterJson, but does not exist in beforeJson."
+    }
+}
+
+// loop through each attributeID
+attributeIDList.each { attribute ->
+
+    // build the file path
+    fileBase = homeDir + "/ng_refactor/"
+    beforeFileName = fileBase + "before/" + attribute + ".json"
+    afterFileName = fileBase + "after/" + attribute + ".json"
+    beforeDoc = new File(beforeFileName)
+    afterDoc = new File(afterFileName)
+
+    // retrieve generic attributes json from file
+    beforeJson = new JsonSlurper().parse(beforeDoc)
+    afterJson = new JsonSlurper().parse(afterDoc)
+
+    // write header for file
+    logWriter.println("\n\ncomparing ${attribute} files\n")
+    logWriter.flush()
+
+    // loop through the entire before json file
+    beforeJson.each { beforeJsonEntry ->
+
+        // loop through each entry of the beforeJson file
+        beforeJsonEntry.each { beforeJsonSubAttribute ->
+
+            // keep track of all the keys we have checked already
+            entryKey = beforeJsonEntry.key
+            entryKeyList << entryKey
+
+            // determine if there is an entry in the afterJson file that exactly matches
+            // the entry from the before json attribute
+            match = afterJson.any { afterJsonEntry ->
+                beforeJsonEntry.equals(afterJsonEntry)
+            }
+
+            if (match == true) {
+                logWriter.println("INFO: ${beforeJsonEntry.key} matches in both files.")
+                logWriter.flush()
+            } else {
+
+                // determine if the entry exists at all in the afterJson file
+                if (afterJson.containsKey(beforeJsonEntry.key)) {
+                    logWriter.println("WARNING: ${beforeJsonEntry.key} exists in both files, but does not match.")
+                    logWriter.flush()
+                } else {
+                    logWriter.println("WARNING: ${beforeJsonEntry.keyy} exists in ${beforeFileName}, but does not " +
+                            "exist in ${afterFileName}.")
+                    logWriter.flush()
+                }
+            }
+        }
+    }
+
+    // loop through each entry of the afterJsonAttribute
+    afterJson.each { afterJsonEntry ->
+
+        // check if we've already checked this entry key
+        entryKey = afterJsonEntry.key
+        match = entryKeyList.contains(entryKey)
+
+        // if we didn't already check it, it must be missing from the beforeJson
+        if(match == false) {
+            logWriter.println("WARNING: ${afterEntryKey} exists in ${afterFileName}, but does not exist in " +
+                    "${beforeFileName}.")
+            logWriter.flush()
+        }
+    }
+
+    // loop through the afterJson
+    afterJson.each { afterJsonEntry ->
+
+        // check if we've already checked this attribute
+        entryKey = afterJsonEntry.key
+        match = entryKeyList.contains(entryKey)
+
+        // if we didn't already check it, it must be missing from the beforeJson
+        if(match == false) {
+            logWriter.println("WARNING: Entry ${entryKey} exists in ${afterFileName}, but does not exist " +
+                    "in ${beforeFileName}.")
+            logWriter.flush()
+        }
     }
 }
 logWriter.close()

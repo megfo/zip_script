@@ -4,8 +4,8 @@ import java.util.logging.Logger
 /**
  * Created by mfoley on 7/8/16.
  */
-def document1 = new File("/Users/mfoley/site_4_generic_attributes.json")
-def document2 = new File("/Users/mfoley/site_4_generic_attributes2.json")
+def document1 = new File("/Users/mfoley/ng_refactor/before/generic_attributes.json")
+def document2 = new File("/Users/mfoley/ng_refactor/after/generic_attributes.json")
 
 def beforeJson = new JsonSlurper().parse(document1)
 def afterJson = new JsonSlurper().parse(document2)

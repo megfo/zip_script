@@ -30,7 +30,6 @@ def perfDetails = new File(fileBase + folder + 'perfDetails.txt')
 perfDetails.createNewFile()
 perfWriter = new PrintWriter(perfDetails)
 
-
 // build the url
 apiString = base
 apiUrl = new URL(apiString)
@@ -62,6 +61,7 @@ f.write(new JsonBuilder(content).toPrettyString())
 writer.close()
 
 // loop through the generic_attributes json
+// for each attribute in the json, call its specific api endpoint
 content.each{ jsonAttribute ->
     attributeID = jsonAttribute['id']
 

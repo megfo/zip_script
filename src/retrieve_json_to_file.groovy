@@ -6,7 +6,8 @@ import groovy.json.JsonBuilder
  */
 
 String base = "http://lxqgk01.nanigans.com/gk/sites/76218/generic_attributes/"
-String fileBase = "/Users/mfoley/ng_refactor/"
+String homeDir = System.getProperty("user.home");
+String fileBase = homeDir + "/ng_refactor/"
 String folder = "/" + args[0] + "/"
 File f
 String apiString

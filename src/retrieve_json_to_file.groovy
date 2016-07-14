@@ -28,7 +28,7 @@ def durationString = new String()
 // create the file where the performance details will be output to
 def perfDetails = new File(fileBase + folder + 'perfDetails.txt')
 perfDetails.createNewFile()
-perfWriter = new PrintWriter(perfDetails)
+def perfWriter = new PrintWriter(perfDetails)
 
 // build the url
 apiString = base
@@ -52,7 +52,6 @@ timeOfResponse = System.currentTimeMillis()
 duration = timeOfResponse - timeOfRequest
 durationString = Objects.toString(duration, null)
 perfWriter.println(apiString + ',' + durationString)
-
 perfWriter.flush()
 
 // write the json to the file

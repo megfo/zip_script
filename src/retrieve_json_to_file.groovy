@@ -7,12 +7,12 @@ import groovy.time.*
  */
 
 // base url for generic attributes endpoints
-String base = "http://lxqgk01.nanigans.com/gk/sites/76218/generic_attributes/"
+String base =  args[0] // example "http://lxqgk01.nanigans.com/gk/sites/76218/generic_attributes/"
 
 // variables for file storage
 def homeDir = new String(System.getProperty("user.home"))
 def fileBase = new String(homeDir + "/ng_refactor/")
-def folder = new String("/" + args[0] + "/")
+def folder = new String("/" + args[1] + "/")
 
 // variables for building urls
 def apiString = new String()

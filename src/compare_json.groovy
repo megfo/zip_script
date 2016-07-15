@@ -7,9 +7,9 @@ import java.util.logging.Logger
 
 // build the file path
 String homeDir = System.getProperty("user.home")
-String fileBase = homeDir + "/"
-String beforeFileName = fileBase + "site_4_generic_attributes.json"
-String afterFileName = fileBase + "site_4_generic_attributes2.json"
+String fileBase = homeDir + "/ng_refactor/"
+String beforeFileName = fileBase + "before/generic_attributes.json"
+String afterFileName = fileBase + "after/generic_attributes.json"
 def beforeDoc = new File(beforeFileName)
 def afterDoc = new File(afterFileName)
 
@@ -30,7 +30,7 @@ String entryKey
 def entryKeyList = []
 
 // create the file for log output
-def logOutput = new File(fileBase + "site4_log_output.txt")
+def logOutput = new File(fileBase + "log_output.txt")
 logOutput.createNewFile()
 def logWriter = new PrintWriter(logOutput)
 
@@ -196,7 +196,7 @@ attributeIDList.each { attribute ->
                     logWriter.println("WARNING: ${beforeJsonEntry.key} exists in both files, but does not match.")
                     logWriter.flush()
                 } else {
-                    logWriter.println("WARNING: ${beforeJsonEntry.keyy} exists in ${beforeFileName}, but does not " +
+                    logWriter.println("WARNING: ${beforeJsonEntry.key} exists in ${beforeFileName}, but does not " +
                             "exist in ${afterFileName}.")
                     logWriter.flush()
                 }

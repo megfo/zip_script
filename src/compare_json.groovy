@@ -213,7 +213,7 @@ attributeIDList.each { attribute ->
 
         // if we didn't already check it, it must be missing from the beforeJson
         if(match == false) {
-            logWriter.println("WARNING: ${afterEntryKey} exists in ${afterFileName}, but does not exist in " +
+            logWriter.println("WARNING: ${afterJsonEntry.key} exists in ${afterFileName}, but does not exist in " +
                     "${beforeFileName}.")
             logWriter.flush()
         }

@@ -28,6 +28,7 @@ def subAttributeKeyList = []
 Boolean attributeExists = false
 String entryKey
 def entryKeyList = []
+Boolean fileNotFound = false
 
 // create the file for log output
 def logOutput = new File(fileBase + "log_output.txt")
@@ -155,6 +156,7 @@ afterJson.each { afterJsonEntry ->
 // loop through each attributeID
 attributeIDList.each { attribute ->
 
+    fileNotFound = false
     // build the file path
     fileBase = homeDir + "/ng_refactor/"
     beforeFileName = fileBase + "before/" + attribute + ".json"
@@ -164,73 +166,82 @@ attributeIDList.each { attribute ->
 
     // retrieve generic attributes json from file
     beforeJson = new JsonSlurper().parse(beforeDoc)
-    afterJson = new JsonSlurper().parse(afterDoc)
+    try {
+        afterJson = new JsonSlurper().parse(afterDoc)
+    }
+    catch (ex) {
+        fileNotFound = true
+        logWriter.println("WARNING: File ${afterFileName} not found.")
+        logWriter.flush()
+    }
+    
+    if (fileNotFound == false ) {
+        // write header for file
+        logWriter.println("\n\ncomparing ${attribute} files\n")
+        logWriter.flush()
 
-    // write header for file
-    logWriter.println("\n\ncomparing ${attribute} files\n")
-    logWriter.flush()
+        // loop through the entire before json file
+        beforeJson.each { beforeJsonEntry ->
 
-    // loop through the entire before json file
-    beforeJson.each { beforeJsonEntry ->
+            // loop through each entry of the beforeJson file
+            beforeJsonEntry.each { beforeJsonSubAttribute ->
 
-        // loop through each entry of the beforeJson file
-        beforeJsonEntry.each { beforeJsonSubAttribute ->
+                // keep track of all the keys we have checked already
+                entryKey = beforeJsonEntry.key
+                entryKeyList << entryKey
 
-            // keep track of all the keys we have checked already
-            entryKey = beforeJsonEntry.key
-            entryKeyList << entryKey
+                // determine if there is an entry in the afterJson file that exactly matches
+                // the entry from the before json attribute
+                match = afterJson.any { afterJsonEntry ->
+                    beforeJsonEntry.equals(afterJsonEntry)
+                }
 
-            // determine if there is an entry in the afterJson file that exactly matches
-            // the entry from the before json attribute
-            match = afterJson.any { afterJsonEntry ->
-                beforeJsonEntry.equals(afterJsonEntry)
-            }
-
-            if (match == true) {
-                logWriter.println("INFO: ${beforeJsonEntry.key} matches in both files.")
-                logWriter.flush()
-            } else {
-
-                // determine if the entry exists at all in the afterJson file
-                if (afterJson.containsKey(beforeJsonEntry.key)) {
-                    logWriter.println("WARNING: ${beforeJsonEntry.key} exists in both files, but does not match.")
+                if (match == true) {
+                    logWriter.println("INFO: ${beforeJsonEntry.key} matches in both files.")
                     logWriter.flush()
                 } else {
-                    logWriter.println("WARNING: ${beforeJsonEntry.key} exists in ${beforeFileName}, but does not " +
-                            "exist in ${afterFileName}.")
-                    logWriter.flush()
+
+                    // determine if the entry exists at all in the afterJson file
+                    if (afterJson.containsKey(beforeJsonEntry.key)) {
+                        logWriter.println("WARNING: ${beforeJsonEntry.key} exists in both files, but does not match.")
+                        logWriter.flush()
+                    } else {
+                        logWriter.println("WARNING: ${beforeJsonEntry.key} exists in ${beforeFileName}, but does not " +
+                                "exist in ${afterFileName}.")
+                        logWriter.flush()
+                    }
                 }
             }
         }
-    }
 
-    // loop through each entry of the afterJsonAttribute
-    afterJson.each { afterJsonEntry ->
+        // loop through each entry of the afterJsonAttribute
+        afterJson.each { afterJsonEntry ->
 
-        // check if we've already checked this entry key
-        entryKey = afterJsonEntry.key
-        match = entryKeyList.contains(entryKey)
+            // check if we've already checked this entry key
+            entryKey = afterJsonEntry.key
+            match = entryKeyList.contains(entryKey)
 
-        // if we didn't already check it, it must be missing from the beforeJson
-        if(match == false) {
-            logWriter.println("WARNING: ${afterJsonEntry.key} exists in ${afterFileName}, but does not exist in " +
-                    "${beforeFileName}.")
-            logWriter.flush()
+            // if we didn't already check it, it must be missing from the beforeJson
+            if (match == false) {
+                logWriter.println("WARNING: ${afterJsonEntry.key} exists in ${afterFileName}, but does not exist in " +
+                        "${beforeFileName}.")
+                logWriter.flush()
+            }
         }
-    }
 
-    // loop through the afterJson
-    afterJson.each { afterJsonEntry ->
+        // loop through the afterJson
+        afterJson.each { afterJsonEntry ->
 
-        // check if we've already checked this attribute
-        entryKey = afterJsonEntry.key
-        match = entryKeyList.contains(entryKey)
+            // check if we've already checked this attribute
+            entryKey = afterJsonEntry.key
+            match = entryKeyList.contains(entryKey)
 
-        // if we didn't already check it, it must be missing from the beforeJson
-        if(match == false) {
-            logWriter.println("WARNING: Entry ${entryKey} exists in ${afterFileName}, but does not exist " +
-                    "in ${beforeFileName}.")
-            logWriter.flush()
+            // if we didn't already check it, it must be missing from the beforeJson
+            if (match == false) {
+                logWriter.println("WARNING: Entry ${entryKey} exists in ${afterFileName}, but does not exist " +
+                        "in ${beforeFileName}.")
+                logWriter.flush()
+            }
         }
     }
 }

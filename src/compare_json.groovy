@@ -171,10 +171,10 @@ attributeIDList.each { attribute ->
     }
     catch (ex) {
         fileNotFound = true
-        logWriter.println("WARNING: File ${afterFileName} not found.")
+        logWriter.println("\n\nWARNING: File ${afterFileName} not found.")
         logWriter.flush()
     }
-    
+
     if (fileNotFound == false ) {
         // write header for file
         logWriter.println("\n\ncomparing ${attribute} files\n")

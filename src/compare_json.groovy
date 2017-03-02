@@ -5,6 +5,10 @@ import java.util.logging.Logger
  * Created by mfoley on 7/8/16.
  */
 
+// base url for generic attributes endpoints
+String log_level =  args[0] // example 'verbose' if you want INFO messages logged, ' ' if not
+String include_values_diffs =  args[1] // example 'Y' if you want to see values differences, 'N' if not
+
 // build the file path
 String homeDir = System.getProperty("user.home")
 String fileBase = homeDir + "/ng_refactor/"
@@ -60,7 +64,9 @@ beforeJson.each{ beforeJsonAttribute ->
     match = afterJson.any{ afterJsonAttribute -> beforeJsonAttribute.equals(afterJsonAttribute) }
 
     if(match == true) {
-        logWriter.println("INFO: Attribute ${attributeID} matches in both files.")
+        if(log_level == 'verbose') {
+            logWriter.println("INFO: Attribute ${attributeID} matches in both files.")
+        }
         logWriter.flush()
     }
     else {
@@ -72,6 +78,7 @@ beforeJson.each{ beforeJsonAttribute ->
             // attribute exists
             if(afterJsonAttributeID == attributeID) {
                 attributeExists = true
+                // TODO: Only print this if include_values_diffs=Y or an attribute other than values differs
                 logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but does not match.")
                 logWriter.flush()
 
@@ -88,15 +95,19 @@ beforeJson.each{ beforeJsonAttribute ->
                         beforeJsonSubAttribute.equals(afterJsonSubAttribute) }
 
                     if(match == true) {
-                        logWriter.println("--> INFO: ${attributeID}.${subAttributeKey} matches in both files.")
+                        if(log_level == 'verbose') {
+                            logWriter.println("--> INFO: ${attributeID}.${subAttributeKey} matches in both files.")
+                        }
                         logWriter.flush()
                     }
                     else {
 
                         // determine if the sub-attribute exists at all in the afterJsonAttribute
                         if (afterJson[i].containsKey(beforeJsonSubAttribute.key)) {
-                            logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in both files, " +
-                                    "but does not match.")
+                            if(subAttributeKey!='values' || include_values_diffs=='Y') {
+                                logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in both " +
+                                        "files, but does not match.")
+                            }
                             logWriter.flush()
                         }
                         else {
@@ -176,6 +187,10 @@ attributeIDList.each { attribute ->
     }
 
     if (fileNotFound == false ) {
+        // TODO: Only print this if:
+        // * log_level=verbose -or-
+        // * a difference exists other than values
+        // * a difference exists for values and include_values_diffs=Y
         // write header for file
         logWriter.println("\n\ncomparing ${attribute} files\n")
         logWriter.flush()
@@ -197,13 +212,21 @@ attributeIDList.each { attribute ->
                 }
 
                 if (match == true) {
-                    logWriter.println("INFO: ${beforeJsonEntry.key} matches in both files.")
+                    if(log_level == 'verbose') {
+                        logWriter.println("INFO: ${beforeJsonEntry.key} matches in both files.")
+                    }
                     logWriter.flush()
                 } else {
 
                     // determine if the entry exists at all in the afterJson file
                     if (afterJson.containsKey(beforeJsonEntry.key)) {
-                        logWriter.println("WARNING: ${beforeJsonEntry.key} exists in both files, but does not match.")
+                        // only print the warning if:
+                        // * the key is not 'values' -or-
+                        // * the key is values and parameter says to include value differences
+                        if(beforeJsonEntry.key!='values' || include_values_diffs=='Y') {
+                            logWriter.println("WARNING: ${beforeJsonEntry.key} exists in both files, but does not " +
+                                    "match.")
+                        }
                         logWriter.flush()
                     } else {
                         logWriter.println("WARNING: ${beforeJsonEntry.key} exists in ${beforeFileName}, but does not " +

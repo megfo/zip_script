@@ -34,8 +34,11 @@ String entryKey
 def entryKeyList = []
 Boolean fileNotFound = false
 Boolean headerPrinted = false
+def ruleTypeMap = [:]
 String ruleType
+def ruleOperatorMap = [:]
 String ruleOperator
+def ruleValueMap = [:]
 String ruleValue
 def ruleMap = [:]
 def rulesChecked = []
@@ -54,7 +57,7 @@ try {
     assert beforeJson.size() == afterJson.size()
 }
 catch (AssertionError assertionError) {
-    logWriter.println("WARNING: The two jsons do not have the same number of values.")
+    logWriter.println("WARNING: The two jsons do not have the same number of values.\n")
     logWriter.flush()
 }
 
@@ -267,7 +270,7 @@ attributeIDList.each { attribute ->
                         if(log_level == 'verbose' || beforeJsonEntry.key!='values' || include_values_diffs=='Y') {
                             // print header for this file if it hasn't already been printed
                             if(headerPrinted == false) {
-                                logWriter.println("\n\ncomparing generic_attributes/${attribute}")
+                                logWriter.println("\ncomparing generic_attributes/${attribute}")
                                 logWriter.flush()
                                 headerPrinted = true
                             }
@@ -294,9 +297,12 @@ attributeIDList.each { attribute ->
                                         beforeJsonRuleEntry.equals(afterJsonRuleEntry)
                                     }
 
-                                    ruleType = beforeJsonRuleEntry.find { key, value -> key == 'type' }
-                                    ruleOperator = beforeJsonRuleEntry.find { key, value -> key == 'operator' }
-                                    ruleValue = beforeJsonRuleEntry.find { key, value -> key == 'value' }
+                                    ruleTypeMap = beforeJsonRuleEntry.find { key, value -> key == 'type' }
+                                    ruleType = ruleTypeMap.value
+                                    ruleOperatorMap = beforeJsonRuleEntry.find { key, value -> key == 'operator' }
+                                    ruleOperator = ruleOperatorMap.value
+                                    ruleValueMap = beforeJsonRuleEntry.find { key, value -> key == 'value' }
+                                    ruleValue = ruleValueMap.value
 
                                     // exact match exists
                                     if (match == true) {
@@ -322,8 +328,7 @@ attributeIDList.each { attribute ->
 
                                     // if we didn't already check it, it must be missing from the beforeJson
                                     if (match == false) {
-                                        logWriter.println("--> NEW MESSAGE " +
-                                                "WARNING: ${ruleType} ${ruleOperator} ${ruleValue} " +
+                                        logWriter.println("--> WARNING: ${ruleType} ${ruleOperator} ${ruleValue} " +
                                                 "match not found (specifics differ or rule is either new or missing).")
                                         logWriter.flush()
                                     }

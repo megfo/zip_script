@@ -34,6 +34,11 @@ String entryKey
 def entryKeyList = []
 Boolean fileNotFound = false
 Boolean headerPrinted = false
+String ruleType
+String ruleOperator
+String ruleValue
+def ruleMap = [:]
+def rulesChecked = []
 
 // create the file for log output
 def logOutput = new File(fileBase + "log_output.txt")
@@ -158,8 +163,8 @@ beforeJson.each{ beforeJsonAttribute ->
 
                     // if we didn't already check it, it must be missing from the beforeJson
                     if(match == false) {
-                        logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in ${afterFileName}, " +
-                                "but does not exist in ${beforeFileName}.")
+                        logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in ${afterFileName}," +
+                                " but does not exist in ${beforeFileName}.")
                         logWriter.flush()
                     }
                 }
@@ -221,14 +226,6 @@ attributeIDList.each { attribute ->
 
         headerPrinted = false
 
-        // TODO: Only print this if:
-        // * log_level=verbose -or-
-        // * a difference exists other than values
-        // * a difference exists for values and include_values_diffs=Y
-        // write header for file
-        // logWriter.println("\n\ncomparing generic_attributes/${attribute}")
-        // logWriter.flush()
-
         // loop through the entire before json file
         beforeJson.each { beforeJsonEntry ->
 
@@ -276,6 +273,62 @@ attributeIDList.each { attribute ->
                             }
                             logWriter.println("WARNING: ${beforeJsonEntry.key} exists in both files, but does not " +
                                     "match.")
+
+                            // Supply details for rules differences
+                            if(beforeJsonEntry.key == 'rules') {
+
+                                // get all the rules in the afterJson
+                                afterJsonRules = afterJson.get(beforeJsonEntry.key)
+                                rulesChecked.clear()
+
+                                // check each rule in the beforeJson for a match in the afterJson
+                                beforeJsonEntry.value.each { beforeJsonRuleEntry ->
+
+                                    // keep track of all the attributes we have checked already
+                                    ruleMap = beforeJsonRuleEntry
+                                    rulesChecked << ruleMap
+
+                                    // determine if there is a rule in the afterJson file that exactly matches
+                                    // the rule from the before json file
+                                    match = afterJsonRules.any { afterJsonRuleEntry ->
+                                        beforeJsonRuleEntry.equals(afterJsonRuleEntry)
+                                    }
+
+                                    ruleType = beforeJsonRuleEntry.find { key, value -> key == 'type' }
+                                    ruleOperator = beforeJsonRuleEntry.find { key, value -> key == 'operator' }
+                                    ruleValue = beforeJsonRuleEntry.find { key, value -> key == 'value' }
+
+                                    // exact match exists
+                                    if (match == true) {
+                                        // only log matches if requested verbose logging
+                                        if(log_level == 'verbose') {
+                                            logWriter.println("--> INFO: ${ruleType} ${ruleOperator} ${ruleValue} + " +
+                                                    "match found (specifics differ or rule is either new or missing).")
+                                            logWriter.flush()
+                                        }
+                                    // exact match does not exist
+                                    } else {
+                                        logWriter.println("--> WARNING: ${ruleType} ${ruleOperator} ${ruleValue} " +
+                                                "match not found (specifics differ or rule is either new or missing).")
+                                        logWriter.flush()
+                                    }
+                                }
+
+                                // loop through each of the afterJsonRules
+                                afterJsonRules.each { afterJsonRuleEntry ->
+
+                                    // check if we've already checked this rule
+                                    match = rulesChecked.any { afterJsonRuleEntry }
+
+                                    // if we didn't already check it, it must be missing from the beforeJson
+                                    if (match == false) {
+                                        logWriter.println("--> NEW MESSAGE " +
+                                                "WARNING: ${ruleType} ${ruleOperator} ${ruleValue} " +
+                                                "match not found (specifics differ or rule is either new or missing).")
+                                        logWriter.flush()
+                                    }
+                                }
+                            }
                         }
                         logWriter.flush()
                     } else {

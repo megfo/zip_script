@@ -166,6 +166,12 @@ beforeJson.each{ beforeJsonAttribute ->
 
                     // if we didn't already check it, it must be missing from the beforeJson
                     if(match == false) {
+                        if(headerPrinted == false) {
+                            logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but does not " +
+                                    "match.")
+                            logWriter.flush()
+                            headerPrinted = true
+                        }
                         logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in ${afterFileName}," +
                                 " but does not exist in ${beforeFileName}.")
                         logWriter.flush()

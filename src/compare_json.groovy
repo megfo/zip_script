@@ -5,7 +5,7 @@ import java.util.logging.Logger
  * Created by mfoley on 7/8/16.
  */
 
-// base url for generic attributes endpoints
+// parameters passed into script
 String log_level =  args[0] // example 'verbose' if you want INFO messages logged, ' ' if not
 String include_values_diffs =  args[1] // example 'Y' if you want to see values differences, 'N' if not
 

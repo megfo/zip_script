@@ -11,6 +11,19 @@ String include_values_diffs =  args[1] // 'Y' if you want to see values differen
 String include_parent_id_diffs = args[2] // 'Y' if you want to see parent_id differences, 'N' if not
 String include_attributes_diffs = args[3] // 'Y' if you want to see attributes differences, 'N' if not
 
+// create the list of attribute types to exclude given the parameters input
+def excludeList = []
+if (include_values_diffs == 'N') {
+    excludeList << "values"
+}
+if (include_parent_id_diffs == 'N') {
+    excludeList << "parent_id"
+}
+if (include_attributes_diffs == 'N') {
+    excludeList << "attributes"
+}
+Boolean exclude = false
+
 // build the file path
 String homeDir = System.getProperty("user.home")
 String fileBase = homeDir + "/ng_refactor/"
@@ -74,23 +87,25 @@ beforeJson.each{ beforeJsonAttribute ->
     // the attribute in the before json file
     match = afterJson.any{ afterJsonAttribute -> beforeJsonAttribute.equals(afterJsonAttribute) }
 
-    // exact match exists
     if(match == true) {
-        // only print INFO messages if parameter asked for verbose logging
+        // attribute exactly matches in the before and after files
+
+        // only log INFO messages if parameter asked for verbose logging
         if(log_level == 'verbose') {
             logWriter.println("INFO: Attribute ${attributeID} matches in both files.")
         }
         logWriter.flush()
     }
-    // exact match does not exist
     else {
+        // attribute does not have an exact match in the before and after files
 
         // determine if the attribute exists at all in the after json file
         for(i=0; i<afterJson.size(); i++) {
             afterJsonAttributeID = afterJson[i].get('id')
 
-            // attribute exists
             if(afterJsonAttributeID == attributeID) {
+                // attribute exists in both files, but differs
+
                 attributeExists = true
                 headerPrinted = false
 
@@ -106,9 +121,10 @@ beforeJson.each{ beforeJsonAttribute ->
                     match = afterJson[i].any{ afterJsonSubAttribute ->
                         beforeJsonSubAttribute.equals(afterJsonSubAttribute) }
 
-                    // exact match exists
                     if(match == true) {
-                        // only print INFO messages if parameter asked for verbose logging
+                        // sub-attribute exactly matches in the before and after files
+
+                        // only log INFO messages if parameter asked for verbose logging
                         if(log_level == 'verbose') {
                             // print header for this attribute if it hasn't already been printed
                             if(headerPrinted == false) {
@@ -121,14 +137,21 @@ beforeJson.each{ beforeJsonAttribute ->
                         }
                         logWriter.flush()
                     }
-                    // exact match does not exist
                     else {
+                        // sub-attribute does not have an exact match in the before and after files
 
                         // determine if the sub-attribute exists at all in the afterJsonAttribute
                         if (afterJson[i].containsKey(beforeJsonSubAttribute.key)) {
+                            // sub-attribute exists
 
-                            // always print error if log_level is verbose
-                            if (log_level == 'verbose') {
+                            // determine if we want to report on this sub-attribute
+                            exclude = false
+                            exclude = excludeList.contains(subAttributeKey)
+
+                            // write to log file if:
+                            // log_level is verbose -or-
+                            // sub-attribute is not one we want to exclude
+                            if (log_level == 'verbose' || exclude == false) {
                                 // print header for this attribute if it hasn't already been printed
                                 if(headerPrinted == false) {
                                     logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
@@ -138,67 +161,20 @@ beforeJson.each{ beforeJsonAttribute ->
                                 }
                                 logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in both " +
                                         "files, but does not match.")
-
-                            // only print values differences if requested
-                            } else if (subAttributeKey == 'values') {
-                                if (include_values_diffs == 'Y') {
-                                    // print header for this attribute if it hasn't already been printed
-                                    if(headerPrinted == false) {
-                                        logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
-                                                "does not match.")
-                                        logWriter.flush()
-                                        headerPrinted = true
-                                    }
-                                    logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in both " +
-                                            "files, but does not match.")
-                                }
-
-                            // only print parent_id differences if requested
-                            } else if (subAttributeKey == 'parent_id') {
-                                if (include_parent_id_diffs == 'Y') {
-                                    // print header for this attribute if it hasn't already been printed
-                                    if(headerPrinted == false) {
-                                        logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
-                                                "does not match.")
-                                        logWriter.flush()
-                                        headerPrinted = true
-                                    }
-                                    logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in both " +
-                                            "files, but does not match.")
-                                }
-
-                            // only print attributes differences if requested
-                            } else if (subAttributeKey == 'attributes') {
-                                if (include_attributes_diffs == 'Y') {
-                                    // print header for this attribute if it hasn't already been printed
-                                    if(headerPrinted == false) {
-                                        logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
-                                                "does not match.")
-                                        logWriter.flush()
-                                        headerPrinted = true
-                                    }
-                                    logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in both " +
-                                            "files, but does not match.")
-                                }
-
-                            // always print all other differences
-                            } else {
-                                // print header for this attribute if it hasn't already been printed
-                                if(headerPrinted == false) {
-                                    logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
-                                            "does not match.")
-                                    logWriter.flush()
-                                    headerPrinted = true
-                                }
-                                logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in both " +
-                                        "files, but does not match.")
+                                logWriter.flush()
                             }
-                            logWriter.flush()
                         }
                         else {
+                            // sub-attribute does not exist
 
-                            // always print error if log_level is verbose
-                            if (log_level == 'verbose') {
+                            // determine if we want to report on this sub-attribute
+                            exclude = false
+                            exclude = excludeList.contains(subAttributeKey)
+
+                            // write to log file if:
+                            // log_level is verbose -or-
+                            // sub-attribute is not one we want to exclude
+                            if (log_level == 'verbose' || exclude == false) {
                                 // print header for this attribute if it hasn't already been printed
                                 if(headerPrinted == false) {
                                     logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
@@ -208,62 +184,8 @@ beforeJson.each{ beforeJsonAttribute ->
                                 }
                                 logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
                                         "${beforeFileName}, but does not exist in ${afterFileName}.")
-
-                            // only print values differences if requested
-                            } else if (subAttributeKey == 'values') {
-                                if (include_values_diffs == 'Y') {
-                                    // print header for this attribute if it hasn't already been printed
-                                    if(headerPrinted == false) {
-                                        logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
-                                                "does not match.")
-                                        logWriter.flush()
-                                        headerPrinted = true
-                                    }
-                                    logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
-                                            "${beforeFileName}, but does not exist in ${afterFileName}.")
-                                }
-
-                            // only print parent_id differences if requested
-                            } else if (subAttributeKey == 'parent_id') {
-                                if (include_parent_id_diffs == 'Y') {
-                                    // print header for this attribute if it hasn't already been printed
-                                    if (headerPrinted == false) {
-                                        logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
-                                                "does not match.")
-                                        logWriter.flush()
-                                        headerPrinted = true
-                                    }
-                                    logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
-                                            "${beforeFileName}, but does not exist in ${afterFileName}.")
-                                }
-
-                            // only print attributes differences if requested
-                            } else if (subAttributeKey == 'attributes') {
-                                if (include_attributes_diffs == 'Y') {
-                                    // print header for this attribute if it hasn't already been printed
-                                    if (headerPrinted == false) {
-                                        logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
-                                                "does not match.")
-                                        logWriter.flush()
-                                        headerPrinted = true
-                                    }
-                                    logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
-                                            "${beforeFileName}, but does not exist in ${afterFileName}.")
-                                }
-
-                            // always print all other differences
-                            } else {
-                                // print header for this attribute if it hasn't already been printed
-                                if(headerPrinted == false) {
-                                    logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
-                                            "does not match.")
-                                    logWriter.flush()
-                                    headerPrinted = true
-                                }
-                                logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
-                                        "${beforeFileName}, but does not exist in ${afterFileName}.")
+                                logWriter.flush()
                             }
-                            logWriter.flush()
                         }
                     }
                 }
@@ -277,15 +199,26 @@ beforeJson.each{ beforeJsonAttribute ->
 
                     // if we didn't already check it, it must be missing from the beforeJson
                     if(match == false) {
-                        if(headerPrinted == false) {
-                            logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but does not " +
-                                    "match.")
+
+                        // determine if we want to report on this sub-attribute
+                        exclude = false
+                        exclude = excludeList.contains(subAttributeKey)
+
+                        // write to log file if:
+                        // log_level is verbose -or-
+                        // sub-attribute is not one we want to exclude
+                        if (log_level == 'verbose' || exclude == false) {
+                            // print header for this attribute if it hasn't already been printed
+                            if (headerPrinted == false) {
+                                logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but does " +
+                                        "not match.")
+                                logWriter.flush()
+                                headerPrinted = true
+                            }
+                            logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
+                                    "${afterFileName}, but does not exist in ${beforeFileName}.")
                             logWriter.flush()
-                            headerPrinted = true
                         }
-                        logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in ${afterFileName}," +
-                                " but does not exist in ${beforeFileName}.")
-                        logWriter.flush()
                     }
                 }
 
@@ -365,8 +298,9 @@ attributeIDList.each { attribute ->
                     beforeJsonEntry.equals(afterJsonEntry)
                 }
 
-                // exact match exists
                 if (match == true) {
+                    // entry exactly matches in the before and after files
+
                     // only print INFO messages if parameter asked for verbose logging
                     if(log_level == 'verbose') {
                         // print header for this file if it hasn't already been printed
@@ -378,16 +312,21 @@ attributeIDList.each { attribute ->
                         logWriter.println("INFO: ${beforeJsonEntry.key} matches in both files.")
                     }
                     logWriter.flush()
-                // exact match does not exist
                 } else {
+                    // entry does not have an exact match in the before and after files
 
                     // determine if the entry exists at all in the afterJson file
                     if (afterJson.containsKey(beforeJsonEntry.key)) {
-                        // only print warning if:
-                        // parameter asked for verbose logging -or-
-                        // attribute is not values -or-
-                        // parameter asked for values diffs
-                        if(log_level == 'verbose' || beforeJsonEntry.key!='values' || include_values_diffs=='Y') {
+                        // Entry exists in both files, but differs
+
+                        // determine if we want to report on this sub-attribute
+                        exclude = false
+                        exclude = excludeList.contains(beforeJsonEntry.key)
+
+                        // write to log file if:
+                        // log_level is verbose -or-
+                        // sub-attribute is not one we want to exclude
+                        if (log_level == 'verbose' || exclude == false) {
                             // print header for this file if it hasn't already been printed
                             if(headerPrinted == false) {
                                 logWriter.println("\ncomparing generic_attributes/${attribute}")
@@ -396,76 +335,88 @@ attributeIDList.each { attribute ->
                             }
                             logWriter.println("WARNING: ${beforeJsonEntry.key} exists in both files, but does not " +
                                     "match.")
+                            logWriter.flush()
+                        }
 
-                            // Supply details for rules differences
-                            if(beforeJsonEntry.key == 'rules') {
+                        // Supply details for rules differences
+                        if(beforeJsonEntry.key == 'rules') {
 
-                                // get all the rules in the afterJson
-                                afterJsonRules = afterJson.get(beforeJsonEntry.key)
-                                rulesChecked.clear()
+                            // get all the rules in the afterJson
+                            afterJsonRules = afterJson.get(beforeJsonEntry.key)
+                            rulesChecked.clear()
 
-                                // check each rule in the beforeJson for a match in the afterJson
-                                beforeJsonEntry.value.each { beforeJsonRuleEntry ->
+                            // check each rule in the beforeJson for a match in the afterJson
+                            beforeJsonEntry.value.each { beforeJsonRuleEntry ->
 
-                                    // keep track of all the attributes we have checked already
-                                    ruleMap = beforeJsonRuleEntry
-                                    rulesChecked << ruleMap
+                                // keep track of all the rules we have checked already
+                                ruleMap = beforeJsonRuleEntry
+                                rulesChecked << ruleMap
 
-                                    // determine if there is a rule in the afterJson file that exactly matches
-                                    // the rule from the before json file
-                                    match = afterJsonRules.any { afterJsonRuleEntry ->
-                                        beforeJsonRuleEntry.equals(afterJsonRuleEntry)
-                                    }
-
-                                    ruleTypeMap = beforeJsonRuleEntry.find { key, value -> key == 'type' }
-                                    ruleType = ruleTypeMap.value
-                                    ruleOperatorMap = beforeJsonRuleEntry.find { key, value -> key == 'operator' }
-                                    ruleOperator = ruleOperatorMap.value
-                                    ruleValueMap = beforeJsonRuleEntry.find { key, value -> key == 'value' }
-                                    ruleValue = ruleValueMap.value
-
-                                    // exact match exists
-                                    if (match == true) {
-                                        // only log matches if requested verbose logging
-                                        if(log_level == 'verbose') {
-                                            logWriter.println("--> INFO: ${ruleType} ${ruleOperator} ${ruleValue} + " +
-                                                    "match found.")
-                                            logWriter.flush()
-                                        }
-                                    // exact match does not exist
-                                    } else {
-                                        logWriter.println("--> WARNING: ${ruleType} ${ruleOperator} ${ruleValue} " +
-                                                "match not found (specifics differ or rule is either new or missing).")
-                                        logWriter.flush()
-                                    }
+                                // determine if there is a rule in the afterJson file that exactly matches
+                                // the rule from the before json file
+                                match = afterJsonRules.any { afterJsonRuleEntry ->
+                                    beforeJsonRuleEntry.equals(afterJsonRuleEntry)
                                 }
 
-                                // loop through each of the afterJsonRules
-                                afterJsonRules.each { afterJsonRuleEntry ->
+                                ruleTypeMap = beforeJsonRuleEntry.find { key, value -> key == 'type' }
+                                ruleType = ruleTypeMap.value
+                                ruleOperatorMap = beforeJsonRuleEntry.find { key, value -> key == 'operator' }
+                                ruleOperator = ruleOperatorMap.value
+                                ruleValueMap = beforeJsonRuleEntry.find { key, value -> key == 'value' }
+                                ruleValue = ruleValueMap.value
 
-                                    // check if we've already checked this rule
-                                    match = rulesChecked.any { afterJsonRuleEntry }
+                                if (match == true) {
+                                    // rule exactly matches in the before and after files
 
-                                    // if we didn't already check it, it must be missing from the beforeJson
-                                    if (match == false) {
-                                        logWriter.println("--> WARNING: ${ruleType} ${ruleOperator} ${ruleValue} " +
-                                                "match not found (specifics differ or rule is either new or missing).")
+                                    // only log matches if requested verbose logging
+                                    if(log_level == 'verbose') {
+                                        logWriter.println("--> INFO: ${ruleType} ${ruleOperator} ${ruleValue} + " +
+                                                "match found.")
                                         logWriter.flush()
                                     }
+                                } else {
+                                    // exact match does not exist
+                                    logWriter.println("--> WARNING: ${ruleType} ${ruleOperator} ${ruleValue} " +
+                                            "match not found (specifics differ or rule is either new or missing).")
+                                    logWriter.flush()
+                                }
+                            }
+
+                            // loop through each of the afterJsonRules
+                            afterJsonRules.each { afterJsonRuleEntry ->
+
+                                // check if we've already checked this rule
+                                match = rulesChecked.any { afterJsonRuleEntry }
+
+                                // if we didn't already check it, it must be missing from the beforeJson
+                                if (match == false) {
+                                    logWriter.println("--> WARNING: ${ruleType} ${ruleOperator} ${ruleValue} " +
+                                            "match not found (specifics differ or rule is either new or missing).")
+                                    logWriter.flush()
                                 }
                             }
                         }
-                        logWriter.flush()
                     } else {
-                        // print header for this file if it hasn't already been printed
-                        if(headerPrinted == false) {
-                            logWriter.println("\ncomparing generic_attributes/${attribute}")
+                        // Entry exists in the before file but not the after
+
+                        // determine if we want to report on this sub-attribute
+                        exclude = false
+                        exclude = excludeList.contains(beforeJsonEntry.key)
+
+                        // write to log file if:
+                        // log_level is verbose -or-
+                        // sub-attribute is not one we want to exclude
+                        if (log_level == 'verbose' || exclude == false) {
+                            // print header for this file if it hasn't already been printed
+                            if(headerPrinted == false) {
+                                logWriter.println("\ncomparing generic_attributes/${attribute}")
+                                logWriter.flush()
+                                headerPrinted = true
+                            }
+                            logWriter.println("WARNING: ${beforeJsonEntry.key} exists in ${beforeFileName}, but does " +
+                                    "not exist in ${afterFileName}.")
                             logWriter.flush()
-                            headerPrinted = true
                         }
-                        logWriter.println("WARNING: ${beforeJsonEntry.key} exists in ${beforeFileName}, but does not " +
-                                "exist in ${afterFileName}.")
-                        logWriter.flush()
                     }
                 }
             }
@@ -480,15 +431,25 @@ attributeIDList.each { attribute ->
 
             // if we didn't already check it, it must be missing from the beforeJson
             if (match == false) {
-                // print header for this file if it hasn't already been printed
-                if(headerPrinted == false) {
-                    logWriter.println("\ncomparing generic_attributes/${attribute}")
+
+                // determine if we want to report on this sub-attribute
+                exclude = false
+                exclude = excludeList.contains(afterJsonEntry.key)
+
+                // write to log file if:
+                // log_level is verbose -or-
+                // sub-attribute is not one we want to exclude
+                if (log_level == 'verbose' || exclude == false) {
+                    // print header for this file if it hasn't already been printed
+                    if (headerPrinted == false) {
+                        logWriter.println("\ncomparing generic_attributes/${attribute}")
+                        logWriter.flush()
+                        headerPrinted = true
+                    }
+                    logWriter.println("WARNING: ${afterJsonEntry.key} exists in ${afterFileName}, but does not exist " +
+                            "in ${beforeFileName}.")
                     logWriter.flush()
-                    headerPrinted = true
                 }
-                logWriter.println("WARNING: ${afterJsonEntry.key} exists in ${afterFileName}, but does not exist in " +
-                        "${beforeFileName}.")
-                logWriter.flush()
             }
         }
 
@@ -501,15 +462,26 @@ attributeIDList.each { attribute ->
 
             // if we didn't already check it, it must be missing from the beforeJson
             if (match == false) {
-                // print header for this file if it hasn't already been printed
-                if(headerPrinted == false) {
-                    logWriter.println("\ncomparing generic_attributes/${attribute}")
+
+                // determine if we want to report on this sub-attribute
+                exclude = false
+                exclude = excludeList.contains(entryKey)
+
+                // write to log file if:
+                // log_level is verbose -or-
+                // sub-attribute is not one we want to exclude
+                if (log_level == 'verbose' || exclude == false) {
+
+                    // print header for this file if it hasn't already been printed
+                    if (headerPrinted == false) {
+                        logWriter.println("\ncomparing generic_attributes/${attribute}")
+                        logWriter.flush()
+                        headerPrinted = true
+                    }
+                    logWriter.println("WARNING: Entry ${entryKey} exists in ${afterFileName}, but does not exist " +
+                            "in ${beforeFileName}.")
                     logWriter.flush()
-                    headerPrinted = true
                 }
-                logWriter.println("WARNING: Entry ${entryKey} exists in ${afterFileName}, but does not exist " +
-                        "in ${beforeFileName}.")
-                logWriter.flush()
             }
         }
     }

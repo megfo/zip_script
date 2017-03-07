@@ -6,8 +6,10 @@ import java.util.logging.Logger
  */
 
 // parameters passed into script
-String log_level =  args[0] // example 'verbose' if you want INFO messages logged, ' ' if not
-String include_values_diffs =  args[1] // example 'Y' if you want to see values differences, 'N' if not
+String log_level =  args[0] // 'verbose' if you want INFO messages logged, ' ' if not
+String include_values_diffs =  args[1] // 'Y' if you want to see values differences, 'N' if not
+String include_parent_id_diffs = args[2] // 'Y' if you want to see parent_id differences, 'N' if not
+String include_attributes_diffs = args[3] // 'Y' if you want to see attributes differences, 'N' if not
 
 // build the file path
 String homeDir = System.getProperty("user.home")
@@ -125,11 +127,62 @@ beforeJson.each{ beforeJsonAttribute ->
                         // determine if the sub-attribute exists at all in the afterJsonAttribute
                         if (afterJson[i].containsKey(beforeJsonSubAttribute.key)) {
 
-                            // only print warning if:
-                            // parameter asked for verbose logging -or-
-                            // attribute is not values -or-
-                            // parameter asked for values diffs
-                            if(log_level == 'verbose' || subAttributeKey!='values' || include_values_diffs=='Y') {
+                            // always print error if log_level is verbose
+                            if (log_level == 'verbose') {
+                                // print header for this attribute if it hasn't already been printed
+                                if(headerPrinted == false) {
+                                    logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
+                                            "does not match.")
+                                    logWriter.flush()
+                                    headerPrinted = true
+                                }
+                                logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in both " +
+                                        "files, but does not match.")
+
+                            // only print values differences if requested
+                            } else if (subAttributeKey == 'values') {
+                                if (include_values_diffs == 'Y') {
+                                    // print header for this attribute if it hasn't already been printed
+                                    if(headerPrinted == false) {
+                                        logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
+                                                "does not match.")
+                                        logWriter.flush()
+                                        headerPrinted = true
+                                    }
+                                    logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in both " +
+                                            "files, but does not match.")
+                                }
+
+                            // only print parent_id differences if requested
+                            } else if (subAttributeKey == 'parent_id') {
+                                if (include_parent_id_diffs == 'Y') {
+                                    // print header for this attribute if it hasn't already been printed
+                                    if(headerPrinted == false) {
+                                        logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
+                                                "does not match.")
+                                        logWriter.flush()
+                                        headerPrinted = true
+                                    }
+                                    logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in both " +
+                                            "files, but does not match.")
+                                }
+
+                            // only print attributes differences if requested
+                            } else if (subAttributeKey == 'attributes') {
+                                if (include_attributes_diffs == 'Y') {
+                                    // print header for this attribute if it hasn't already been printed
+                                    if(headerPrinted == false) {
+                                        logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
+                                                "does not match.")
+                                        logWriter.flush()
+                                        headerPrinted = true
+                                    }
+                                    logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in both " +
+                                            "files, but does not match.")
+                                }
+
+                            // always print all other differences
+                            } else {
                                 // print header for this attribute if it hasn't already been printed
                                 if(headerPrinted == false) {
                                     logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
@@ -143,15 +196,73 @@ beforeJson.each{ beforeJsonAttribute ->
                             logWriter.flush()
                         }
                         else {
-                            // print header for this attribute if it hasn't already been printed
-                            if(headerPrinted == false) {
-                                logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
-                                        "does not match.")
-                                logWriter.flush()
-                                headerPrinted = true
+
+                            // always print error if log_level is verbose
+                            if (log_level == 'verbose') {
+                                // print header for this attribute if it hasn't already been printed
+                                if(headerPrinted == false) {
+                                    logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
+                                            "does not match.")
+                                    logWriter.flush()
+                                    headerPrinted = true
+                                }
+                                logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
+                                        "${beforeFileName}, but does not exist in ${afterFileName}.")
+
+                            // only print values differences if requested
+                            } else if (subAttributeKey == 'values') {
+                                if (include_values_diffs == 'Y') {
+                                    // print header for this attribute if it hasn't already been printed
+                                    if(headerPrinted == false) {
+                                        logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
+                                                "does not match.")
+                                        logWriter.flush()
+                                        headerPrinted = true
+                                    }
+                                    logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
+                                            "${beforeFileName}, but does not exist in ${afterFileName}.")
+                                }
+
+                            // only print parent_id differences if requested
+                            } else if (subAttributeKey == 'parent_id') {
+                                if (include_parent_id_diffs == 'Y') {
+                                    // print header for this attribute if it hasn't already been printed
+                                    if (headerPrinted == false) {
+                                        logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
+                                                "does not match.")
+                                        logWriter.flush()
+                                        headerPrinted = true
+                                    }
+                                    logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
+                                            "${beforeFileName}, but does not exist in ${afterFileName}.")
+                                }
+
+                            // only print attributes differences if requested
+                            } else if (subAttributeKey == 'attributes') {
+                                if (include_attributes_diffs == 'Y') {
+                                    // print header for this attribute if it hasn't already been printed
+                                    if (headerPrinted == false) {
+                                        logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
+                                                "does not match.")
+                                        logWriter.flush()
+                                        headerPrinted = true
+                                    }
+                                    logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
+                                            "${beforeFileName}, but does not exist in ${afterFileName}.")
+                                }
+
+                            // always print all other differences
+                            } else {
+                                // print header for this attribute if it hasn't already been printed
+                                if(headerPrinted == false) {
+                                    logWriter.println("WARNING: Attribute ${attributeID} exists in both files, but " +
+                                            "does not match.")
+                                    logWriter.flush()
+                                    headerPrinted = true
+                                }
+                                logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
+                                        "${beforeFileName}, but does not exist in ${afterFileName}.")
                             }
-                            logWriter.println("--> WARNING: ${attributeID}.${subAttributeKey} exists in " +
-                                    "${beforeFileName}, but does not exist in ${afterFileName}.")
                             logWriter.flush()
                         }
                     }
@@ -209,6 +320,9 @@ afterJson.each { afterJsonEntry ->
     }
 }
 
+logWriter.println("\n------------------------------------------------------------------------------------------\n")
+logWriter.flush()
+
 // loop through each attributeID
 attributeIDList.each { attribute ->
 
@@ -257,7 +371,7 @@ attributeIDList.each { attribute ->
                     if(log_level == 'verbose') {
                         // print header for this file if it hasn't already been printed
                         if(headerPrinted == false) {
-                            logWriter.println("\n\ncomparing generic_attributes/${attribute}")
+                            logWriter.println("\ncomparing generic_attributes/${attribute}")
                             logWriter.flush()
                             headerPrinted = true
                         }
@@ -315,7 +429,7 @@ attributeIDList.each { attribute ->
                                         // only log matches if requested verbose logging
                                         if(log_level == 'verbose') {
                                             logWriter.println("--> INFO: ${ruleType} ${ruleOperator} ${ruleValue} + " +
-                                                    "match found (specifics differ or rule is either new or missing).")
+                                                    "match found.")
                                             logWriter.flush()
                                         }
                                     // exact match does not exist
@@ -345,7 +459,7 @@ attributeIDList.each { attribute ->
                     } else {
                         // print header for this file if it hasn't already been printed
                         if(headerPrinted == false) {
-                            logWriter.println("\n\ncomparing generic_attributes/${attribute}")
+                            logWriter.println("\ncomparing generic_attributes/${attribute}")
                             logWriter.flush()
                             headerPrinted = true
                         }
@@ -368,7 +482,7 @@ attributeIDList.each { attribute ->
             if (match == false) {
                 // print header for this file if it hasn't already been printed
                 if(headerPrinted == false) {
-                    logWriter.println("\n\ncomparing generic_attributes/${attribute}")
+                    logWriter.println("\ncomparing generic_attributes/${attribute}")
                     logWriter.flush()
                     headerPrinted = true
                 }
@@ -389,7 +503,7 @@ attributeIDList.each { attribute ->
             if (match == false) {
                 // print header for this file if it hasn't already been printed
                 if(headerPrinted == false) {
-                    logWriter.println("\n\ncomparing generic_attributes/${attribute}")
+                    logWriter.println("\ncomparing generic_attributes/${attribute}")
                     logWriter.flush()
                     headerPrinted = true
                 }
